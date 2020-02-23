@@ -1,0 +1,36 @@
+[CA가 사용할 RSA  key 쌍(public, private key)을 만들기]
+
+openssl genrsa -aes256 -out cleanbrain_rootca_private.key 2048
+openssl rsa -in cleanbrain_rootca_private.key -out cleanbrain_rootca_public_key.pem -pubout
+
+pw : changeit
+
+
+[인증서 요청 파일 (.csr) 만들기]
+
+openssl req -new -key cleanbrain_rootca_private.key -out cleanbrain_rootca.csr -config D:\DesktopFiles\Installer\openssl-0.9.8k_X64\openssl.cnf
+
+
+[10년짜리 self-signed 인증서 만들기]
+
+openssl x509 -req -days 3650 -extensions v3_ca -set_serial 1 -in cleanbrain_rootca.csr -signkey cleanbrain_rootca_private.key -out cleanbrain_rootca.crt
+
+
+[웹서버를 위한 인증서 생성]
+
+openssl genrsa -aes256 -out cleanbrain_localhost_private.key 2048
+
+
+[인증서 요청파일(.csr) 만들기]
+
+openssl req -new -key cleanbrain_localhost_private.key -out cleanbrain_localhost.csr -config D:\DesktopFiles\Installer\openssl-0.9.8k_X64\openssl.cnf
+
+
+[10년짜리 localhost용 SSL 인증서 발급하기(CA 개인키로 서명)]
+
+openssl x509 -req -days 3650 -extensions v3_user -in cleanbrain_localhost.csr -CA cleanbrain_rootca.crt -CAcreateserial -CAkey cleanbrain_rootca_private.key -out cleanbrain_localhost.crt
+
+
+[Tomcat용 인증서 파일 생성]
+
+openssl pkcs12 -export -in cleanbrain_localhost.crt -inkey cleanbrain_localhost_private.key -out keystore -name "localhost cert"
